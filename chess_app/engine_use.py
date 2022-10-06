@@ -1,7 +1,9 @@
 from stockfish import Stockfish
 
 class ChessInterface():
-    """Default parametrs
+    """
+    https://pypi.org/project/stockfish/
+    Default parametrs
     "Debug Log File": "",
     "Contempt": 0,
     "Min Split Depth": 0,
