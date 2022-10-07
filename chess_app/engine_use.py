@@ -1,4 +1,6 @@
+from dataclasses import replace
 from stockfish import Stockfish
+import numpy as np
 
 class ChessInterface():
     """
@@ -22,24 +24,54 @@ class ChessInterface():
     def __init__(self) -> None:
         self.stockfish = Stockfish(path="chess_app\src\stockfish_15_x64_avx2.exe")
 
-    def printCurrentPos(self):
+    def _strip(self, x):
+        return x.strip()
+
+    def printCurrentPos(self, type='base'):
+        
         print(self.stockfish.get_board_visual())
+
+
+    def getCurTable(self):
+        board = self.stockfish.get_board_visual().replace('+', '').replace('-', '').replace('|', '')
+        np_board = np.array([])
+        for line in board.split('\n')[:-2]:
+            if line != '' and 'a  b  c' not in line:
+                np_board = np.append(np_board, np.array(line[1:-3].split('  ')[:8]))        
+        np_board = np_board.reshape(8,8)
+        np_board[np_board == ''] = 0
+        strp = np.vectorize(self._strip)
+        np_board = strp(np_board)
+        
+        return np_board
 
     def reset(self):
         clear_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         self.stockfish.set_fen_position(clear_pos)
 
     def step(self, pos1, pos2, view_from ='white'):
-        self.stockfish.set_position([f'{pos1}{pos2}'])
+        try:
+            check = self.stockfish.get_what_is_on_square(pos2)
+            eat = False if check == None else True
+            self.stockfish.set_position([f'{pos1}{pos2}'])
+            return eat
+        except ValueError:
+            return -1
 
-"""test
+    def getTopSteps(self, n=5):
+        steps = self.stockfish.get_top_moves(n)
+        array = np.array([])
+        for step in steps:
+            array = np.append(array, np.array([step['Move'], step['Centipawn'], step['Mate']]), axis=0)
+        array = array.reshape(n,3)
+        array = array[array[:,1].argsort()][::-1]
+        return array
+
+#"""test
 def main():
-    chs = ChessInterface()
-    chs.printCurrentPos()
-    chs.step('e2', 'e4')
-    chs.printCurrentPos()
-    chs.reset()
-    chs.printCurrentPos()
+    chs2 = ChessInterface()
+    print(chs2.step('d2', 'd4'))
+    chs2.printCurrentPos()
 
 main()
-"""
+#"""
