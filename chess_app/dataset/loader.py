@@ -19,3 +19,4 @@ class loaderChessPos():
             state = [line.rstrip('\n') for line in f]
 
         return state
+
