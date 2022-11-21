@@ -54,6 +54,7 @@ class ChessInterface:
     def reset(self):
         clear_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         self.stockfish.set_fen_position(clear_pos)
+        return clear_pos
 
     def step(self, pos1, pos2, view_from='white'):
         try:
