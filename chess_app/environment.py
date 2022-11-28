@@ -26,6 +26,7 @@ class ChessInterface:
 
     def __init__(self, engine_path:str, verbose=False) -> None:
         self.stockfish = Stockfish(path=engine_path)
+        self.stockfish.update_engine_parameters({'Skill Level': 5})
         self.verbose = verbose
 
     @staticmethod
