@@ -26,7 +26,7 @@ class ChessInterface:
 
     def __init__(self, engine_path:str, verbose=False) -> None:
         self.stockfish = Stockfish(path=engine_path)
-        self.stockfish.update_engine_parameters({'Skill Level': 5})
+        self.stockfish.update_engine_parameters({'Skill Level': 20, "Minimum Thinking Time": 5, "Hash": 2048})
         self.verbose = verbose
 
     @staticmethod
@@ -71,8 +71,14 @@ class ChessInterface:
         array = np.array([])
         for step in steps:
             array = np.append(array, np.array([step['Move'], step['Centipawn'], step['Mate']]), axis=0)
-        array = array.reshape(n, 3)
-        array = array[array[:, 1].argsort()][::-1]
+        if len(steps) < 6:
+            array = array.reshape(len(steps), 3)
+        else:
+            array = array.reshape(n, 3)
+        try:
+            array = array[array[:, 1].argsort()][::-1]
+        except TypeError:
+            pass
         return array
 
     def player_move(self, move: str):
@@ -96,3 +102,6 @@ class ChessInterface:
         # if figure := self.stockfish.get_what_is_on_square(move[2:]):
         #     if figure is not None and self.verbose is True:
         #         print(f'-- {figure} was captured.') # todo: это фигня работает не так, как надо, исправлю потом
+        
+
+

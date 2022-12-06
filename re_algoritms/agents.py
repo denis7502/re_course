@@ -4,6 +4,7 @@ import hashlib
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from collections import namedtuple
+import numpy as np
 
 
 # ChessState = namedtuple("ChessState", ["reward", "move"])
@@ -22,6 +23,56 @@ class AbstractAgent(ABC):
     def set_fen(self, fen: str):
         self.current_state = fen
         self.board.set_fen(fen)
+        
+    def extractPos(self, fen_str):
+        desk = np.zeros((8,8)).astype(int).astype(str)
+        arr_str = fen_str.split('/')
+        ends = ' '.join(arr_str[-1].split(' ')[1:])
+        arr_str[-1] = arr_str[-1].split(' ')[0]
+        for i, j in enumerate(arr_str):
+            pos = 0
+            for k,sym in enumerate(j):
+                if not sym.isdigit():
+                    desk[i, pos] = sym
+                    pos += 1
+                else:
+                    pos += int(sym)
+        return [desk, ends]
+
+    def _checkIsUpper(self, char):
+        return char.isupper()
+
+    def insertWhitePos(self, desk1, desk2, ends):
+        check = np.vectorize(self._checkIsUpper)
+        desk1_chips = np.where(check(desk1) == True)
+        desk2_chips = np.where(check(desk2) == True)
+        desk = desk1.copy()
+        desk[desk1_chips] = '0'
+        desk[desk2_chips] = desk2[desk2_chips]
+        
+        
+        fen = ''
+        for i in range(8):
+            chips = np.where(desk[i, :] != '0')[0]
+            if len(chips) > 0:
+                if len(chips) == 1:
+                    fen += f'{chips[0]}{desk[i, chips[0]]}{8-chips[0]-1}'
+                elif len(chips) > 1:
+                    fen += f'{chips[0]}'
+                    for j, k in zip([*chips, -1][:-1], [*chips, -1][1:]) :
+                        if k != -1:
+                            v = k - j -1
+                            fen += f'{desk[i, j]}{v if v != 0 else ""}'
+
+                        else:
+                            fen += f'{desk[i, j]}{8-j-1 if 8-j-1 != 0 else ""}'
+            else:
+                fen += '8'
+            fen += '/'
+        
+        fen = f'{fen[:-1]} {ends}'
+        
+        return fen        
 
     @abstractmethod
     def return_move(self, *args, **kwargs) -> str:
@@ -44,9 +95,12 @@ class QAgent(AbstractAgent):
         self.lr = lr
         self.gamma = gamma
 
-    def get_legal_moves(self, state):
+    def get_legal_moves(self, state, stockfish):
         self.board.set_fen(state)
-        return [str(move) for move in self.board.legal_moves]
+        lg_move = [str(move) for move in stockfish.get_top_steps()[:,0]]
+
+        return lg_move
+
 
     def get_opponent_moves(self, player_move):
         self.board.push_san(player_move)
@@ -54,44 +108,56 @@ class QAgent(AbstractAgent):
         self.board.set_fen(self.current_state)
         return opponent_moves
 
-    def get_next_states(self, player_move, opponent_moves):
-        states = list()
-        for opp_move in opponent_moves:
-            self.board.push_san(player_move)
-            self.board.push_san(opp_move)
-            states.append(self.board.fen())
-            self.board.set_fen(self.current_state)
-        return states
-
-    def return_move(self, state, e):
+    def get_next_states(self, player_move, state):
         self.set_fen(state)
-        self.update_qtable(state)
+        self.board.push_san(player_move)
+        #self.board.push_san(opp_move)
+        #states.append(self.board.fen())
+        #self.board.set_fen(self.current_state)
+
+        return self.board.fen()
+
+    def return_move(self, state, stockfish,e):
+        self.set_fen(state)
+        #self.update_qtable(state, stockfish)
         if random.random() < e:
-            print(' - exploratory')
-            legal_moves = self.get_legal_moves(state)
+            #print(' - exploratory')
+            legal_moves = self.get_legal_moves(state, stockfish)
             move = random.choice(legal_moves)
             return move
         else:
             return str(self.get_move_with_max_qvalue(state))
+            
 
-    def update_qtable(self, state):
+    def update_qtable(self, state, stockfish):
         if state not in self.q_table:
             q_item = dict()
-            legal_moves = self.get_legal_moves(state)
+            legal_moves = self.get_legal_moves(state, stockfish)
             for move in legal_moves:
-                opponent_moves = self.get_opponent_moves(move)
-                next_states = self.get_next_states(move, opponent_moves)
-                for next_state in next_states:
+                #opponent_moves = self.get_opponent_moves(move)
+                next_state = self.get_next_states(move, state)
+                stockfish.stockfish.set_fen_position(next_state)
+                try:
+                    stockfish.env_move()
+                    next_state = self.get_next_states(move, state)
+                    #for next_state in next_states:
+                    #print(next_state)
                     q_item[next_state] = ChessState(
                         move=move,
                         #reward=0.6
                         reward=random.uniform(0.4, 0.8) # fixme !!
                     )
-            self.add_to_qtable(key=state, value=q_item)
+                except ValueError:
+                    q_item[state] = ChessState(
+                        move=move,
+                        #reward=0.6
+                        reward= 1.0#random.uniform(0.4, 0.8) # fixme !!
+                    )
+                    
+                self.add_to_qtable(key=state, value=q_item)
 
     def calculate_qvalue(self, actions, reward):
         max_value = -1
-
         for state, prev_state in zip(reversed(actions), reversed(actions[:-1])):
             if max_value < 0:
                 self.q_table[prev_state][state].reward = reward
@@ -111,3 +177,11 @@ class QAgent(AbstractAgent):
         moves = self.q_table[state]
         max_q_move = max(moves, key=moves.get)
         return str(self.q_table[state][max_q_move].move)
+    
+    def hashFen(self, fen_str):
+        desk = self.extractPos(fen_str)
+        check = np.vectorize(self._checkIsUpper)
+        desk1_chips = np.where(check(desk) == True)
+        desk[~desk1_chips] = '0'
+        
+
