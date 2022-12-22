@@ -44,14 +44,18 @@ loader = loaderChessPos(r'./chess_app/dataset')
 player = RandomAgent()
 js = {}
 stockfish = ChessInterface(verbose=True, engine_path=r"./chess_app/src/stockfish_15_x64_avx2.exe")
-
-for step in tqdm(loader.games.keys()):
-    js[step] = {}
-    for state in loader.games[step]:
+c = 0
+for step in loader.games.keys():
+    #js[step] = {}
+    for state in tqdm(loader.games[step]):
+        c += 1
+        js[c] = {}
+        if state == 'r3k2r/1p1ppp1p/8/b2N1Q1K/8/8/8/8 w KQkq - 0 1' and step == '2step':
+            continue
         try:
-            js[step][state] = gamesToWin(state, stockfish, player)
+            js[c][state] = gamesToWin(state, stockfish, player)
         except:
             stockfish = ChessInterface(verbose=True, engine_path=r"./chess_app/src/stockfish_15_x64_avx2.exe")
-del js['2step']['r3k2r/1p1ppp1p/8/b2N1Q1K/8/8/8/8 w KQkq - 0 1']
+#del js['2step']['r3k2r/1p1ppp1p/8/b2N1Q1K/8/8/8/8 w KQkq - 0 1']
 with open('result.json', 'w', encoding='utf-8') as fp:
     json.dump(js, fp, ensure_ascii=False, indent=4)
