@@ -210,8 +210,9 @@ class DQNAgent(AbstractAgent):
         return (move - 1111) / (8888 - 1111)
 
     def return_move(self, state, good_moves):
-        state = torch.from_numpy(self.board_tokenizer.transform(state).toarray()).to(torch.float32)
-        good_moves = torch.tensor([self.move_to_number(move) for move in good_moves]).to(torch.float32)
+        state = torch.tensor(state).to(torch.float32).unsqueeze(0)
+        good_moves = torch.tensor([self.move_to_number(move[0]) for move in good_moves]).to(torch.float32).unsqueeze(0)
+        print(state.shape, good_moves.shape)
 
         out = self.policy_net(state, good_moves)
         move_num = torch.argmax(out, dim=1)
