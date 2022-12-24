@@ -42,6 +42,7 @@ class tanstsovVecLoader():
         rows[f'{self.columns[1]}'] = num_step
         desk = np.zeros((8,8)).astype(int).astype(str)
         arr_str = fen_str.split('/')
+        b_w = arr_str[-1].split(' ')[1]
         swap = arr_str[-1].split(' ')[2]
         arr_str[-1] = arr_str[-1].split(' ')[0]
         for i, j in enumerate(arr_str):
@@ -71,10 +72,13 @@ class tanstsovVecLoader():
             
         for e, i in enumerate(desk.ravel()):
             rows[f'{self.columns[6 + e]}'] = self.swap[i]
+
+        if b_w == 'b':
+            rows[f'{self.columns[1]}'] = -1
             
         return rows
     
-    def loadFullData(self):
+    def getAllData(self):
         with open(self.PATH, 'r') as f:
             data = json.load(f)
         c = 1
@@ -85,9 +89,10 @@ class tanstsovVecLoader():
                 for e, state in enumerate(data[id_party][party]['state']):
                     self.df.loc[c] = self.extractPos(state, id_party, e+1)
                     c += 1
-        self.df.to_csv('test.csv', index=False, sep=';')
+        return self.df.loc[self.df['num_step'] == 0].iloc[:,2:]
+        # self.df.to_csv('test.csv', index=False, sep=';')
             
-# EXAMPLE
-test = tanstsovVecLoader(r'result.json', r'settings.json')
-test.createDf()
-test.loadFullData()
+# #EXAMPLE
+# test = tanstsovVecLoader(r'chess_app\dataset\result.json', r'chess_app\dataset\settings.json')
+# test.createDf()
+# print(test.getAllData().shape)
