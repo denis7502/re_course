@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import json
 import numpy as np
+import pickle
 
 class loaderChessPos():
     def __init__(self, path_to_data) -> None:
@@ -80,6 +81,10 @@ class tanstsovVecLoader():
         return rows
     
     def getAllData(self):
+        if os.path.exists('data.pkl'):
+            self.df = pd.read_pickle("data.pkl")
+            return self.df.loc[self.df['num_step'] == 0].iloc[:,3:], self.df.loc[self.df['num_step'] == 0].iloc[:,2]                
+            
         with open(self.PATH, 'r') as f:
             data = json.load(f)
         c = 1
@@ -90,10 +95,11 @@ class tanstsovVecLoader():
                 for e, state in enumerate(data[id_party][party]['state']):
                     self.df.loc[c] = self.extractPos(state, id_party, e+1)
                     c += 1
+        self.df.to_pickle("data.pkl") 
         return self.df.loc[self.df['num_step'] == 0].iloc[:,3:], self.df.loc[self.df['num_step'] == 0].iloc[:,2]
         # self.df.to_csv('test.csv', index=False, sep=';')
             
 # #EXAMPLE
-# test = tanstsovVecLoader(r'chess_app\dataset\result.json', r'chess_app\dataset\settings.json')
-# test.createDf()
-# print(test.getAllData())
+test = tanstsovVecLoader(r'chess_app\dataset\result.json', r'chess_app\dataset\settings.json')
+test.createDf()
+print(test.getAllData())
