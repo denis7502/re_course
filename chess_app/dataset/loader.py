@@ -99,7 +99,7 @@ class tanstsovVecLoader():
         return self.df.loc[self.df['num_step'] == 0].iloc[:,3:], self.df.loc[self.df['num_step'] == 0].iloc[:,2]
         # self.df.to_csv('test.csv', index=False, sep=';')
             
-# #EXAMPLE
-test = tanstsovVecLoader(r'chess_app\dataset\result.json', r'chess_app\dataset\settings.json')
-test.createDf()
-print(test.getAllData())
+# # #EXAMPLE
+# test = tanstsovVecLoader(r'chess_app\dataset\result.json', r'chess_app\dataset\settings.json')
+# test.createDf()
+# print(test.getAllData())
