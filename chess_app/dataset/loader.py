@@ -74,7 +74,7 @@ class tanstsovVecLoader():
             
         return rows
     
-    def loadFullData(self):
+    def getAllData(self):
         with open(self.PATH, 'r') as f:
             data = json.load(f)
         c = 1
@@ -85,9 +85,10 @@ class tanstsovVecLoader():
                 for e, state in enumerate(data[id_party][party]['state']):
                     self.df.loc[c] = self.extractPos(state, id_party, e+1)
                     c += 1
+        return self.df.loc[self.df['num_step'] == 0].iloc[:,2:]
         #self.df.to_csv('test.csv', index=False, sep=';')
             
-#EXAMPLE
-# test = tanstsovVecLoader(r'result.json', r'chess_app\dataset\settings.json')
+# #EXAMPLE
+# test = tanstsovVecLoader(r'chess_app\dataset\result.json', r'chess_app\dataset\settings.json')
 # test.createDf()
-# test.loadFullData()
+# print(test.loadFullData().iloc[:, 2:])
