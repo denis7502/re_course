@@ -203,22 +203,29 @@ class DQNAgent(AbstractAgent):
         move[0] = letters_to_num[move[0]]
         move[2] = letters_to_num[move[2]]
         move = ''.join(move)
-        print(move)
-
         move = int(move)
 
         return (move - 1111) / (8888 - 1111)
 
     def return_move(self, state, good_moves):
-        state = torch.tensor(state).to(torch.float32).unsqueeze(0)
-        good_moves = torch.tensor([self.move_to_number(move[0]) for move in good_moves]).to(torch.float32).unsqueeze(0)
-        print(state.shape, good_moves.shape)
+        state_vec = torch.tensor(state).to(torch.float32).unsqueeze(0)
+        good_moves_vec = torch.tensor([self.move_to_number(move[0][:4]) for move in good_moves]).to(torch.float32).unsqueeze(0)
 
-        out = self.policy_net(state, good_moves)
+        out = self.policy_net(state_vec, good_moves_vec)
         move_num = torch.argmax(out, dim=1)
-        self.actions.append(out)
+        self.actions.append(out[0][move_num])
 
-        return good_moves[move_num]
+        return good_moves[move_num][0]
+
+        # state_vec = torch.from_numpy(self.board_tokenizer.transform([state]).toarray()).to(torch.float32)
+        # good_moves_vec = torch.tensor([self.move_to_number(move[0]) for move in good_moves]).unsqueeze(0)
+        #
+        # out = self.policy_net(state_vec, good_moves_vec)
+        # move_num = torch.argmax(out, dim=1)
+        # self.actions.append(out[0][move_num])
+        #
+        # return good_moves[move_num][0]
+
 
     def update_policy(self, all_rewards):
         R = 0
@@ -233,6 +240,7 @@ class DQNAgent(AbstractAgent):
         loss = 1 - torch.sum( # todo: 1 - ?
             torch.mul(actions, rewards.T).mul(-1), -1   # todo: is it correct?
         )
+        loss.requires_grad = True
 
         self.optimizer.zero_grad()
         loss.backward()

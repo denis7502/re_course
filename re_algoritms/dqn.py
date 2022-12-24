@@ -30,8 +30,8 @@ class GrandMasterNet(nn.Module):
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, board_vector, moves_vector):
-        x2 = board_vector/12
-        x1 = self.board_net(x2)
+        x1 = board_vector/12
+        x1 = self.board_net(x1)
         x2 = self.moves_net(moves_vector)
 
         x = torch.cat((x1, x2), dim=1)

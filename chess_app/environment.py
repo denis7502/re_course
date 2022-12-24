@@ -1,4 +1,5 @@
 from stockfish import Stockfish
+from chess_app.chess_exceptions import NotEnoughMovesExceptions
 import numpy as np
 
 import chess
@@ -82,6 +83,10 @@ class ChessInterface:
             array = array[array[:, 1].argsort()][::-1]
         except TypeError:
             pass
+
+        if len(array) < n:
+            raise NotEnoughMovesExceptions
+
         return array
 
     def player_move(self, move: str):
