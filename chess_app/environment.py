@@ -52,6 +52,9 @@ class ChessInterface:
     def get_board_fen(self):
         return self.stockfish.get_fen_position()
 
+    def set_board_fen(self, fen):
+        self.stockfish.set_fen_position(fen)
+
     def reset(self):
         clear_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         self.stockfish.set_fen_position(clear_pos)

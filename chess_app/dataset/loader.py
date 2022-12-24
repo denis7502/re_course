@@ -85,9 +85,9 @@ class tanstsovVecLoader():
                 for e, state in enumerate(data[id_party][party]['state']):
                     self.df.loc[c] = self.extractPos(state, id_party, e+1)
                     c += 1
-        #self.df.to_csv('test.csv', index=False, sep=';')
+        self.df.to_csv('test.csv', index=False, sep=';')
             
-#EXAMPLE
-# test = tanstsovVecLoader(r'result.json', r'chess_app\dataset\settings.json')
-# test.createDf()
-# test.loadFullData()
+# EXAMPLE
+test = tanstsovVecLoader(r'result.json', r'settings.json')
+test.createDf()
+test.loadFullData()
