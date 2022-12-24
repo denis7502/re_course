@@ -40,6 +40,7 @@ class tanstsovVecLoader():
     def extractPos(self, fen_str, id_party, num_step):
         rows = {f'{self.columns[0]}': id_party}
         rows[f'{self.columns[1]}'] = num_step
+        rows[f'{self.columns[2]}'] = fen_str        
         desk = np.zeros((8,8)).astype(int).astype(str)
         arr_str = fen_str.split('/')
         b_w = arr_str[-1].split(' ')[1]
@@ -54,24 +55,24 @@ class tanstsovVecLoader():
                 else:
                     pos += int(sym)
         if 'K' in swap:
-            rows[f'{self.columns[2]}'] = 1
-        else:
-            rows[f'{self.columns[2]}'] = 0
-        if 'Q' in swap:
-            rows[f'{self.columns[3]}'] = 1        
+            rows[f'{self.columns[3]}'] = 1
         else:
             rows[f'{self.columns[3]}'] = 0
-        if 'k' in swap:
+        if 'Q' in swap:
             rows[f'{self.columns[4]}'] = 1        
         else:
             rows[f'{self.columns[4]}'] = 0
-        if 'q' in swap:
-            rows[f'{self.columns[5]}'] = 1
+        if 'k' in swap:
+            rows[f'{self.columns[5]}'] = 1        
         else:
             rows[f'{self.columns[5]}'] = 0
+        if 'q' in swap:
+            rows[f'{self.columns[6]}'] = 1
+        else:
+            rows[f'{self.columns[6]}'] = 0
             
         for e, i in enumerate(desk.ravel()):
-            rows[f'{self.columns[6 + e]}'] = self.swap[i]
+            rows[f'{self.columns[7 + e]}'] = self.swap[i]
 
         if b_w == 'b':
             rows[f'{self.columns[1]}'] = -1
@@ -89,10 +90,10 @@ class tanstsovVecLoader():
                 for e, state in enumerate(data[id_party][party]['state']):
                     self.df.loc[c] = self.extractPos(state, id_party, e+1)
                     c += 1
-        return self.df.loc[self.df['num_step'] == 0].iloc[:,2:]
+        return self.df.loc[self.df['num_step'] == 0].iloc[:,3:], self.df.loc[self.df['num_step'] == 0].iloc[:,2]
         # self.df.to_csv('test.csv', index=False, sep=';')
             
 # #EXAMPLE
 # test = tanstsovVecLoader(r'chess_app\dataset\result.json', r'chess_app\dataset\settings.json')
 # test.createDf()
-# print(test.getAllData().shape)
+# print(test.getAllData())

@@ -1,6 +1,7 @@
 {"columns":
     ["id_party",
     "num_step",
+    "fen_pos",
     "white_king_castle", 
     "white_queen_castle",
     "black_king_castle",
