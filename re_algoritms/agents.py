@@ -5,6 +5,8 @@ import hashlib
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from collections import namedtuple
+import torch.distributions.categorical as categ
+
 import numpy as np
 
 from sklearn.feature_extraction.text import HashingVectorizer
@@ -184,12 +186,12 @@ class QAgent(AbstractAgent):
 
 
 class DQNAgent(AbstractAgent):
-    def __init__(self, model: torch.nn.Module, gamma: float=0.3, lr: float=3e-4):
+    def __init__(self, model: torch.nn.Module, gamma: float = 0.3, lr: float = 3e-4):
         super().__init__()
         self.gamma = gamma
         self.lr = lr
         self.policy_net = model
-        self.actions = list()
+        self.actions = torch.tensor([], requires_grad=True, dtype=torch.float32)
         self.board_tokenizer = HashingVectorizer(lowercase=False, analyzer='char', n_features=64)
         self.optimizer = torch.optim.Adam(model.parameters(), lr=self.lr)
 
@@ -207,25 +209,31 @@ class DQNAgent(AbstractAgent):
 
         return (move - 1111) / (8888 - 1111)
 
+    def reset_actions(self):
+        self.actions = torch.tensor([], requires_grad=True, dtype=torch.float32)
+
     def return_move(self, state, good_moves):
         state_vec = torch.tensor(state).to(torch.float32).unsqueeze(0)
-        good_moves_vec = torch.tensor([self.move_to_number(move[0][:4]) for move in good_moves]).to(torch.float32).unsqueeze(0)
+        good_moves_vec = torch.tensor([self.move_to_number(move[0][:4]) for move in good_moves]).to(
+            torch.float32).unsqueeze(0)
 
         out = self.policy_net(state_vec, good_moves_vec)
-        move_num = torch.argmax(out, dim=1)
-        self.actions.append(out[0][move_num])
 
-        return good_moves[move_num][0]
+        c = categ.Categorical(out)
+        action = c.sample()
+        actions = c.log_prob(action)
+        actions = actions.unsqueeze(0)
 
-        # state_vec = torch.from_numpy(self.board_tokenizer.transform([state]).toarray()).to(torch.float32)
-        # good_moves_vec = torch.tensor([self.move_to_number(move[0]) for move in good_moves]).unsqueeze(0)
-        #
-        # out = self.policy_net(state_vec, good_moves_vec)
+        if self.actions.dim() > 0:
+            self.actions = torch.cat([self.actions, actions])
+        else:
+            self.actions = actions
+
         # move_num = torch.argmax(out, dim=1)
+        # print(f'\t\tMove num: {move_num}')
         # self.actions.append(out[0][move_num])
-        #
-        # return good_moves[move_num][0]
 
+        return good_moves[action][0], action
 
     def update_policy(self, all_rewards):
         R = 0
@@ -234,16 +242,17 @@ class DQNAgent(AbstractAgent):
             R = rw + self.gamma * R
             rewards.insert(0, R)
 
-        actions = torch.tensor(data=self.actions)
-        rewards = torch.tensor(data=rewards)
+        # actions = torch.tensor(data=self.actions, requires_grad=True)
+        rewards = torch.tensor(data=rewards, requires_grad=True)
 
-        loss = 1 - torch.sum( # todo: 1 - ?
-            torch.mul(actions, rewards.T).mul(-1), -1   # todo: is it correct?
-        )
-        loss.requires_grad = True
+        loss = torch.sum(torch.mul(self.actions, rewards).mul(-1))
+        # print(loss)
+        # loss.requires_grad = True
 
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
 
+        self.reset_actions()
 
+        return loss

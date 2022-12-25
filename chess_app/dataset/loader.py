@@ -80,10 +80,11 @@ class tanstsovVecLoader():
             
         return rows
     
-    def getAllData(self):
+    def getAllData(self, frac=1.0):
         if os.path.exists('data.pkl'):
             self.df = pd.read_pickle("data.pkl")
-            return self.df.loc[self.df['num_step'] == 0].iloc[:,3:], self.df.loc[self.df['num_step'] == 0].iloc[:,2]                
+            return self.df.loc[self.df['num_step'] == 0].iloc[:, 2:].sample(frac=frac)
+            # return self.df.loc[self.df['num_step'] == 0].iloc[:,3:], self.df.loc[self.df['num_step'] == 0].iloc[:,2]
             
         with open(self.PATH, 'r') as f:
             data = json.load(f)
@@ -96,7 +97,8 @@ class tanstsovVecLoader():
                     self.df.loc[c] = self.extractPos(state, id_party, e+1)
                     c += 1
         self.df.to_pickle("data.pkl") 
-        return self.df.loc[self.df['num_step'] == 0].iloc[:,3:], self.df.loc[self.df['num_step'] == 0].iloc[:,2]
+        return self.df.loc[self.df['num_step'] == 0].iloc[:, 2:].sample(frac=frac)
+        #, self.df.loc[self.df['num_step'] == 0].iloc[:,2]
         # self.df.to_csv('test.csv', index=False, sep=';')
             
 # # #EXAMPLE
