@@ -245,7 +245,7 @@ class DQNAgent(AbstractAgent):
         # actions = torch.tensor(data=self.actions, requires_grad=True)
         rewards = torch.tensor(data=rewards, requires_grad=True)
 
-        loss = torch.sum(torch.mul(self.actions, rewards).mul(-1))
+        loss = 1 - torch.sum(torch.mul(self.actions, rewards))
         # print(loss)
         # loss.requires_grad = True
 

@@ -80,7 +80,8 @@ class ChessInterface:
         else:
             array = array.reshape(n, 3)
         try:
-            array = array[array[:, 1].argsort()][::-1]
+            # array = array[array[:, 1].argsort()][::-1]
+            np.random.shuffle(array)
         except TypeError:
             pass
 
