@@ -9,26 +9,26 @@ class GrandMasterNet(nn.Module):
                  ):
         super().__init__()
         self.board_net = nn.Sequential(
-            nn.Linear(board_vec_dim, board_vec_dim * 2),
-            nn.LeakyReLU(),
-            nn.Linear(board_vec_dim * 2, board_vec_dim),
-            nn.LeakyReLU(),
-            nn.Linear(board_vec_dim, board_vec_dim // 2),
-            nn.LeakyReLU()
+            nn.Linear(board_vec_dim, 128),
+            nn.Tanh(),
+            nn.Linear(128, 256),
+            nn.Tanh(),
+            nn.Linear(256, 16),
+            nn.Tanh()
         )
 
         self.moves_net = nn.Sequential(
-            nn.Linear(moves_vec_dim, moves_vec_dim * 4),
-            nn.LeakyReLU(),
-            nn.Linear(moves_vec_dim * 4, moves_vec_dim * 2),
-            nn.LeakyReLU()
+            nn.Linear(moves_vec_dim, 16),
+            nn.Tanh(),
+            nn.Linear(16, 4),
+            nn.Tanh()
         )
 
         self.output_net = nn.Sequential(
-            nn.Linear((board_vec_dim // 2 + moves_vec_dim * 2), (board_vec_dim // 2 + moves_vec_dim * 2) // 2),
-            nn.LeakyReLU(),
-            nn.Linear((board_vec_dim // 2 + moves_vec_dim * 2) // 2, moves_vec_dim),
-            nn.LeakyReLU()
+            nn.Linear((16 + 4), 32),
+            nn.Tanh(),
+            nn.Linear(32, 5),
+            #nn.Tanh()
         )
 
         self.softmax = nn.Softmax(dim=1)
