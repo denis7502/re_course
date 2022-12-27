@@ -5,7 +5,8 @@ from torch import nn
 class GrandMasterNet(nn.Module):
     def __init__(self,
                  board_vec_dim: int = 64,
-                 moves_vec_dim: int = 5
+                 moves_vec_dim: int = 5,
+                 dropout_p: float = 0.4
                  ):
         super().__init__()
         self.board_net = nn.Sequential(
@@ -13,8 +14,10 @@ class GrandMasterNet(nn.Module):
             nn.LeakyReLU(),
             nn.Linear(board_vec_dim * 2, board_vec_dim),
             nn.LeakyReLU(),
+            # nn.Dropout(p=dropout_p), # todo !!!!!!!!!
             nn.Linear(board_vec_dim, board_vec_dim // 2),
             nn.LeakyReLU()
+
         )
 
         self.moves_net = nn.Sequential(
@@ -27,6 +30,7 @@ class GrandMasterNet(nn.Module):
         self.output_net = nn.Sequential(
             nn.Linear((board_vec_dim // 2 + moves_vec_dim * 2), (board_vec_dim // 2 + moves_vec_dim * 2) // 2),
             nn.LeakyReLU(),
+            # nn.Dropout(p=dropout_p), # todo !!!!!!!!!
             nn.Linear((board_vec_dim // 2 + moves_vec_dim * 2) // 2, moves_vec_dim),
             nn.LeakyReLU()
         )
